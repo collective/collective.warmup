@@ -32,8 +32,24 @@ this package should be installed by zc.buildout::
 Configuration file
 ==================
 
-example::
+warmup.ini example::
 
     [warmup]
-    enabled = False
+    enabled = True
+    sleep = 2
 
+    urls =
+        home
+
+
+    [config]
+    base_url = http://localhost:8081
+
+
+    [home]
+    url = ${config:base_url}/Plone/front-page
+    check_exists =
+        Benvenuto in Plone
+        http://localhost:8081/Plone/@@security-controlpanel
+    check_not_exists =
+        http://not.exists
