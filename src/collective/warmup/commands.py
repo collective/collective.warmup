@@ -1,19 +1,11 @@
 import logging
-import ConfigParser as configparser
-
-logging.basicConfig()
-
-logger = logging.getLogger('Collective Warmup')
-logger.setLevel(logging.INFO)
+from .checker import Checker
 
 
 def warmup(configuration):
-    logger.info(configuration)
-    config = configparser.ConfigParser({'enabled': 'True'})
-    config.read(configuration)
+    checker = Checker(configuration)
 
-    enabled = config.getboolean('warmup', 'enabled')
-    if not enabled:
-        logger.info('Warmup script has been disabled')
+    if not checker.enabled:
         exit(0)
-    import pdb; pdb.set_trace( )
+
+    checker.execute()
