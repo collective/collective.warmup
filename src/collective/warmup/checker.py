@@ -8,11 +8,7 @@ import UserDict
 import urllib2
 
 
-logging.basicConfig()
-
-logger = logging.getLogger('Collective Warmup')
-logger.setLevel(logging.INFO)
-
+LOG_LEVEL = logging.INFO
 FAILED = '\033[91mFAILED\033[0m'
 OK = '\033[92mOK\033[0m'
 
@@ -27,20 +23,40 @@ class Checker(UserDict.DictMixin):
     urls = None
     sleep = 10
 
-    def __init__(self, config_file):
+    def __init__(self, config_file, port):
         self.parser = configparser.ConfigParser({
             'enabled': 'True'
         })
         self.parser.read(config_file)
         self._data = {}
         self.enabled = self.parser.getboolean('warmup', 'enabled')
+        self.port = port
+        self.host = self.parser.get('warmup', 'host')
+        self.instance = self.parser.get('warmup', 'plone_instance')
+
+        logging.basicConfig()
+        self.logger = logging.getLogger('Collective Warmup')
+        self.logger.setLevel(logging.INFO)
+
 
         if not self.enabled:
-            logger.warning('Script has been disabled')
+            self.logger.warning('Script has been disabled')
 
-    def _get_links(self, url, page, ignore_middle, ignore_end):
+    def _get_url(self, path):
+        if not path.startswith('/'):
+            path = '/{0}'.format(path)
+
+        return 'http://{0}:{1}/{2}{3}'.format(
+            self.host,
+            self.port,
+            self.instance,
+            path
+        )
+
+    def _get_links(self, page, ignore_middle, ignore_end):
         tree = lxml.html.fromstring(page)
         links = []
+        url = self._get_url('')
         for link in tree.iterlinks():
             link = link[2]
             ignore = False
@@ -65,7 +81,7 @@ class Checker(UserDict.DictMixin):
     def _warmup(self, section):
         options = self.get(section)
 
-        logger.info('Warmup section {0}'.format(section))
+        self.logger.info('Section {0}'.format(section))
 
         def _get_option_array(name):
             value = options.get(name, '')
@@ -78,8 +94,9 @@ class Checker(UserDict.DictMixin):
         if isinstance(max_attempts, str):
             max_attempts = int(max_attempts)
 
+        url = self._get_url(options['path'])
         page = self._probing(
-            options['url'],
+            url,
             max_attempts,
             check_exists,
             check_not_exists
@@ -90,13 +107,12 @@ class Checker(UserDict.DictMixin):
 
         if page and options.get('follow_links', False):
             links = self._get_links(
-                options['url'],
                 page,
                 ignore_middle, ignore_end
             )
-            logger.info(
+            self.logger.info(
                 '{0} links found on the {1}.'.format(
-                    len(links), options['url']
+                    len(links), url
                 )
             )
             for link in links:
@@ -129,14 +145,14 @@ class Checker(UserDict.DictMixin):
                     check = False
 
                 if check:
-                    logger.info('{0} [ {1} sec. ] [ {2} ]'.format(
+                    self.logger.info('{0} [ {1} sec. ] [ {2} ]'.format(
                         url,
                         elapsed.seconds,
                         OK)
                     )
                     return output
             except urllib2.URLError:
-                logger.error('{0} - Attempt {1}'.format(
+                self.logger.error('{0} - Attempt {1}'.format(
                     url,
                     i)
                 )
@@ -144,7 +160,7 @@ class Checker(UserDict.DictMixin):
             time.sleep(self.sleep)
             if i >= max_attempts:
                 elapsed = datetime.now() - start
-                logger.info('{0} [ {1} sec. ] [ {2} ]'.format(
+                self.logger.info('{0} [ {1} sec. ] [ {2} ]'.format(
                     url,
                     elapsed.seconds,
                     FAILED)
@@ -153,8 +169,6 @@ class Checker(UserDict.DictMixin):
             i += 1
 
     def execute(self):
-        # logger.info('execute {}'.format(configuration))
-
         try:
             self.sleep = self.parser.getint('warmup', 'sleep')
         except configparser.NoOptionError:
@@ -172,19 +186,19 @@ class Checker(UserDict.DictMixin):
             self._raw[section] = dict(self.parser.items(section))
 
         if not self.urls:
-            logger.error('No urls specified')
+            self.logger.error('No urls specified')
         else:
             for section in self.urls:
                 if not section:
                     continue
 
                 if section not in self._raw:
-                    logger.error("Section {0} doesn't exist".format(section))
+                    self.logger.error("Section {0} doesn't exist".format(section))
                     continue
 
                 self._warmup(section)
 
-            logger.info("Warmup Done")
+            self.logger.info("Warmup Done")
 
     def __getitem__(self, section):
         try:
