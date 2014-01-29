@@ -1,13 +1,12 @@
-from datetime import datetime
-
-from urllib2 import URLError
-
-import time
-import re
-import logging
 import ConfigParser as configparser
+from datetime import datetime
+import logging
+import lxml.html
+import re
+import time
 import UserDict
 import urllib2
+
 
 logging.basicConfig()
 
@@ -19,7 +18,12 @@ OK = '\033[92mOK\033[0m'
 
 
 class Checker(UserDict.DictMixin):
+    """It reads the configuration file and extracts
+    all the parts that have to be parsed.
 
+    For all section defined in urls variable it try to
+    retrieve a specific url and check some the output
+    """
     urls = None
     sleep = 10
 
@@ -32,9 +36,33 @@ class Checker(UserDict.DictMixin):
         self.enabled = self.parser.getboolean('warmup', 'enabled')
 
         if not self.enabled:
-            logger.warning('Warmup script has been disabled')
+            logger.warning('Script has been disabled')
 
-    def _check(self, section):
+    def _get_links(self, url, page, ignore_middle, ignore_end):
+        tree = lxml.html.fromstring(page)
+        links = []
+        for link in tree.iterlinks():
+            link = link[2]
+            ignore = False
+            if not link.startswith(url):
+                continue
+            if link == url:
+                continue
+            for middle in ignore_middle:
+                if not ignore and middle in link:
+                    ignore = True
+            if ignore:
+                continue
+            for end in ignore_end:
+                if not ignore and link.endswith(end):
+                    ignore = True
+            if ignore:
+                continue
+            if link not in links:
+                links.append(link)
+        return links
+
+    def _warmup(self, section):
         options = self.get(section)
         check_exists = options.get('check_exists')
         if check_exists:
@@ -43,17 +71,43 @@ class Checker(UserDict.DictMixin):
         if check_not_exists:
             check_not_exists = [i for i in check_not_exists.splitlines() if i]
 
-        self._probing(
+        max_attempts = options.get('max_attempts', 5)
+        if isinstance(max_attempts, str):
+            max_attempts = int(max_attempts)
+
+        page = self._probing(
             options['url'],
-            2,
+            max_attempts,
             check_exists,
             check_not_exists
         )
 
-    def _probing(self, url, max_attempts=10,
+        # TODO: get options from ini file
+        ignore_middle = ignore_end = []
+
+        if page and options.get('follow_links', False):
+            links = self._get_links(
+                options['url'],
+                page,
+                ignore_middle, ignore_end
+            )
+            logger.info(
+                '{0} links found on the {1}.'.format(
+                    len(links), options['url']
+                )
+            )
+            for link in links:
+                self._probing(
+                    link,
+                    max_attempts,
+                    None,  # don't check the html output
+                    None   # for the links found
+                )
+
+    def _probing(self, url, max_attempts=5,
                  check_exists=None,
                  check_not_exists=None):
-        i = 0
+        i = 1
         start = datetime.now()
         check = True
         while True:
@@ -61,34 +115,33 @@ class Checker(UserDict.DictMixin):
                 output = urllib2.urlopen(url).read()
                 elapsed = datetime.now() - start
 
+                # check that specific text in html output exists
                 if check_exists and not \
                         [x for x in check_exists if x in output]:
-                    import pdb; pdb.set_trace( )
                     check = False
 
+                # check that specific text in html output doesn't exist
                 if check_not_exists and \
                         [x for x in check_not_exists if x in output]:
-                    import pdb; pdb.set_trace( )
                     check = False
 
                 if check:
-                    logger.info('Warmup: {0} [ {1} sec. ] [ {2} ]'.format(
+                    logger.info('{0} [ {1} sec. ] [ {2} ]'.format(
                         url,
                         elapsed.seconds,
                         OK)
                     )
                     return output
-            except URLError:
-                logger.erro('Warmup: {0} [ {1} sec. ] [ {2} ]'.format(
+            except urllib2.URLError:
+                logger.error('{0} - Attempt {1}'.format(
                     url,
-                    elapsed.seconds,
-                    FAILED)
+                    i)
                 )
 
             time.sleep(self.sleep)
             if i >= max_attempts:
                 elapsed = datetime.now() - start
-                logger.info('Warmup: {0} [ {1} sec. ] [ {2} ]'.format(
+                logger.info('{0} [ {1} sec. ] [ {2} ]'.format(
                     url,
                     elapsed.seconds,
                     FAILED)
@@ -113,10 +166,7 @@ class Checker(UserDict.DictMixin):
 
         self._raw = {}
         for section in self.parser.sections():
-            try:
-                self._raw[section] = dict(self.parser.items(section))
-            except:
-                import pdb; pdb.set_trace( )
+            self._raw[section] = dict(self.parser.items(section))
 
         if not self.urls:
             logger.error('No urls specified')
@@ -129,7 +179,7 @@ class Checker(UserDict.DictMixin):
                     logger.error("Section {0} doesn't exist".format(section))
                     continue
 
-                self._check(section)
+                self._warmup(section)
 
     def __getitem__(self, section):
         try:
@@ -144,7 +194,12 @@ class Checker(UserDict.DictMixin):
 
 
 class Options(UserDict.DictMixin):
+    """Based on collective.transmogrifier code
 
+    It extracts some options from a dictionary and performs text
+    substitutions when a snippet like this is found
+    ${<part>:<variable>}
+    """
     def __init__(self, checker, section, data):
         self.checker = checker
         self.section = section
@@ -187,6 +242,7 @@ class Options(UserDict.DictMixin):
     _template_split = re.compile('([$]{[^}]*})').split
     _valid = re.compile('\${[-a-zA-Z0-9 ._]+:[-a-zA-Z0-9 ._]+}$').match
     _tales = re.compile('^\s*string:', re.MULTILINE).match
+
     def _sub(self, template, seen):
         parts = self._template_split(template)
         subs = []
@@ -218,29 +274,6 @@ class Options(UserDict.DictMixin):
             raise KeyError('Missing option: %s:%s' % (self.section, key))
         return v
 
-    # def __setitem__(self, option, value):
-    #     if not isinstance(value, str):
-    #         raise TypeError('Option values must be strings', value)
-    #     self._data[option] = value
-
-    # def __delitem__(self, key):
-    #     if key in self._raw:
-    #         del self._raw[key]
-    #         if key in self._data:
-    #             del self._data[key]
-    #         if key in self._cooked:
-    #             del self._cooked[key]
-    #     elif key in self._data:
-    #         del self._data[key]
-    #     else:
-    #         raise KeyError(key)
-
     def keys(self):
         raw = self._raw
         return list(self._raw) + [k for k in self._data if k not in raw]
-
-    # def copy(self):
-    #     result = self._raw.copy()
-    #     result.update(self._cooked)
-    #     result.update(self._data)
-    #     return result

@@ -48,8 +48,22 @@ warmup.ini example::
 
     [home]
     url = ${config:base_url}/Plone/front-page
+    max_attempts = ${config:max_attempts}
     check_exists =
-        Benvenuto in Plone
         http://localhost:8081/Plone/@@security-controlpanel
     check_not_exists =
         http://not.exists
+    follow_links = True
+    ignore_middle =
+        @@
+        ++theme++
+        #
+        /front-page/
+        ?
+    ignore_end =
+        .css
+        .js
+        .png
+        .jpg
+        .jpeg
+        .gif
