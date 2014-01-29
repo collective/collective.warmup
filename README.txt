@@ -40,11 +40,12 @@ warmup.ini example::
 
     urls =
         home
+        ...
 
 
     [config]
     base_url = http://localhost:8081
-
+    max_attempts = 2
 
     [home]
     url = ${config:base_url}/Plone/front-page

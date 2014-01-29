@@ -1,7 +1,8 @@
+from App.config import getConfiguration
 import logging
-import time
 import subprocess
-import os
+import time
+from ZServer.HTTPServer import zhttp_server
 
 
 logger = logging.getLogger('WARMUP ::: ')
@@ -13,10 +14,12 @@ class Starting(object):
         logger.warning('Starting Warmup')
         # time.sleep(5)
 
-        # from App.config import getConfiguration
         # config = getConfiguration()
         # import pdb; pdb.set_trace( )
+        # config = getConfiguration()
+        # zserver = [
+        #     server for server in config.servers
+        #     if isinstance(server, zhttp_server)
+        # ][0]
 
-        # XXX: get a real path
-        # pid = subprocess.Popen(["bin/warmup.py"]).pid
-        logger.warning('Warmup DONE!')
+        pid = subprocess.Popen(["bin/warmup"]).pid

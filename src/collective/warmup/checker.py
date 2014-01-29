@@ -184,6 +184,8 @@ class Checker(UserDict.DictMixin):
 
                 self._warmup(section)
 
+            logger.info("Warmup Done")
+
     def __getitem__(self, section):
         try:
             return self._data[section]
