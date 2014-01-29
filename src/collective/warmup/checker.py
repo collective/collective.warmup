@@ -64,12 +64,15 @@ class Checker(UserDict.DictMixin):
 
     def _warmup(self, section):
         options = self.get(section)
-        check_exists = options.get('check_exists')
-        if check_exists:
-            check_exists = [i for i in check_exists.splitlines() if i]
-        check_not_exists = options.get('check_not_exists')
-        if check_not_exists:
-            check_not_exists = [i for i in check_not_exists.splitlines() if i]
+
+        logger.info('Warmup section {0}'.format(section))
+
+        def _get_option_array(name):
+            value = options.get(name, '')
+            return [i for i in value.splitlines() if i]
+
+        check_exists = _get_option_array('check_exists')
+        check_not_exists = _get_option_array('check_not_exists')
 
         max_attempts = options.get('max_attempts', 5)
         if isinstance(max_attempts, str):
@@ -82,8 +85,8 @@ class Checker(UserDict.DictMixin):
             check_not_exists
         )
 
-        # TODO: get options from ini file
-        ignore_middle = ignore_end = []
+        ignore_middle = _get_option_array('ignore_middle')
+        ignore_end = _get_option_array('ignore_end')
 
         if page and options.get('follow_links', False):
             links = self._get_links(
