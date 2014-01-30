@@ -19,4 +19,6 @@ class Starting(object):
             server for server in config.servers
             if isinstance(server, zhttp_server)
         ][0]
-        subprocess.Popen(["bin/warmup", str(zserver.port)]).pid
+        time.sleep(30)
+        # XXX: fix me
+        # subprocess.Popen(["bin/warmup", str(zserver.port)]).pid
