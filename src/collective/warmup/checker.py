@@ -9,8 +9,8 @@ import urllib2
 
 
 LOG_LEVEL = logging.INFO
-FAILED = '\033[91mFAILED\033[0m'
-OK = '\033[92mOK\033[0m'
+FAILED = 'FAILED'
+OK = 'OK'
 
 
 class Checker(UserDict.DictMixin):
@@ -34,10 +34,18 @@ class Checker(UserDict.DictMixin):
         self.host = self.parser.get('warmup', 'host')
         self.instance = self.parser.get('warmup', 'plone_instance')
 
-        logging.basicConfig()
-        self.logger = logging.getLogger('Collective Warmup')
-        self.logger.setLevel(logging.INFO)
+        # setup logger
+        try:
+            logfile = self.parser.get('warmup', 'logfile')
+        except configparser.NoOptionError:
+            logfile = 'warmup.log'
 
+        logging.basicConfig(
+            filename=logfile,
+            level=logging.INFO,
+            format='%(asctime)s %(levelname)s %(message)s'
+        )
+        self.logger = logging.getLogger('Collective Warmup')
 
         if not self.enabled:
             self.logger.warning('Script has been disabled')
