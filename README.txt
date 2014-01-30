@@ -1,14 +1,13 @@
 Introduction
 ============
 
-
-
 Based on https://gist.github.com/gforcada/7040082
+
 
 Installation
 ============
 
-this package should be installed by zc.buildout::
+This package should be installed by zc.buildout::
 
     [buildout]
     ...
@@ -21,6 +20,8 @@ this package should be installed by zc.buildout::
     ...
     eggs +=
        collective.warmup
+    environment-vars =
+        WARMUP_BIN ${buildout:directory}/bin/warmup
 
 
     [warmup]
@@ -37,21 +38,24 @@ warmup.ini example::
     [warmup]
     enabled = True
     sleep = 2
+    plone_instance = Plone
+    host = localhost
+    logfile = /path/to/warmup.log
 
     urls =
-        home
-        ...
+        Home page
 
 
     [config]
-    base_url = http://localhost:8081
     max_attempts = 2
 
-    [home]
-    url = ${config:base_url}/Plone/front-page
+
+    [Home page]
+    path = /
     max_attempts = ${config:max_attempts}
     check_exists =
-        http://localhost:8081/Plone/@@security-controlpanel
+        Welcome to Plone
+        /Plone/@@security-controlpanel
     check_not_exists =
         http://not.exists
     follow_links = True
@@ -59,7 +63,6 @@ warmup.ini example::
         @@
         ++theme++
         #
-        /front-page/
         ?
     ignore_end =
         .css
@@ -68,3 +71,6 @@ warmup.ini example::
         .jpg
         .jpeg
         .gif
+        .xml
+        RSS
+        .ico

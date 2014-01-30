@@ -109,7 +109,6 @@ class Checker(UserDict.DictMixin):
             check_exists,
             check_not_exists
         )
-
         ignore_middle = _get_option_array('ignore_middle')
         ignore_end = _get_option_array('ignore_end')
 
@@ -201,7 +200,9 @@ class Checker(UserDict.DictMixin):
                     continue
 
                 if section not in self._raw:
-                    self.logger.error("Section {0} doesn't exist".format(section))
+                    self.logger.error(
+                        "Section {0} doesn't exist".format(section)
+                    )
                     continue
 
                 self._warmup(section)
