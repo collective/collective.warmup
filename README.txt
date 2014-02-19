@@ -27,7 +27,7 @@ This package should be installed by zc.buildout::
     [warmup]
     recipe = zc.recipe.egg:scripts
     eggs = collective.warmup
-    arguments = '${buildout:directory}/warump.ini'
+    arguments = '${buildout:directory}/warmup.ini'
 
 
 Configuration file
