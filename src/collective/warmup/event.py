@@ -6,7 +6,7 @@ from App.config import getConfiguration
 from ZServer.HTTPServer import zhttp_server
 
 
-logger = logging.getLogger('WARMUP ::: ')
+logger = logging.getLogger('Collective Warmup')
 
 
 class Starting(object):
@@ -21,11 +21,19 @@ class Starting(object):
         time.sleep(5)
 
         warmup_bin = os.environ.get('WARMUP_BIN', False)
+        warmup_ini = os.environ.get('WARMUP_INI', False)
         if not warmup_bin:
             logger.error('WARMUP_BIN not set')
-        else:
-            logger.info('Starting Warmup')
+        if not warmup_ini:
+            logger.error('WARMUP_INI not set')
+
+        if warmup_bin and warmup_ini:
+            logger.info('Executing intances warmup')
             proc = subprocess.Popen(
-                ["{0} {1}".format(warmup_bin, zserver.port)],
+                [
+                    "{0} {1} -p {2}".format(
+                        warmup_bin, warmup_ini, zserver.port
+                    )
+                ],
                 shell=True
             )

@@ -8,7 +8,6 @@ import UserDict
 import urllib2
 
 
-LOG_LEVEL = logging.INFO
 FAILED = 'FAILED'
 OK = 'OK'
 
@@ -207,7 +206,7 @@ class Checker(UserDict.DictMixin):
 
                 self._warmup(section)
 
-            self.logger.info("Warmup Done")
+            self.logger.warning("Warmup Done")
 
     def __getitem__(self, section):
         try:
