@@ -74,3 +74,11 @@ warmup.ini example::
         .xml
         RSS
         .ico
+
+
+Credits
+-------
+
+.. image:: http://www.abstract.it/logo-abstract-readme?a
+   :alt: Abstract Website
+   :target: http://www.abstract.it
