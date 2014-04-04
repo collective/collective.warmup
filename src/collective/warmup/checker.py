@@ -30,8 +30,7 @@ class Checker(UserDict.DictMixin):
         self._data = {}
         self.enabled = self.parser.getboolean('warmup', 'enabled')
         self.port = port
-        self.host = self.parser.get('warmup', 'host')
-        self.instance = self.parser.get('warmup', 'plone_instance')
+        self.base_url = self.parser.get('warmup', 'base_url')
 
         # setup logger
         try:
@@ -52,11 +51,9 @@ class Checker(UserDict.DictMixin):
     def _get_url(self, path):
         if not path.startswith('/'):
             path = '/{0}'.format(path)
-
-        return 'http://{0}:{1}/{2}{3}'.format(
-            self.host,
+        return '{0}:{1}{2}'.format(
+            self.base_url,
             self.port,
-            self.instance,
             path
         )
 
@@ -111,7 +108,7 @@ class Checker(UserDict.DictMixin):
         ignore_middle = _get_option_array('ignore_middle')
         ignore_end = _get_option_array('ignore_end')
 
-        if page and options.get('follow_links', False):
+        if page and options.get('follow_links', 'false').lower() == 'true':
             links = self._get_links(
                 page,
                 ignore_middle, ignore_end
