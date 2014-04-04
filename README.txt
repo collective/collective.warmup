@@ -22,12 +22,12 @@ This package should be installed by zc.buildout::
        collective.warmup
     environment-vars =
         WARMUP_BIN ${buildout:directory}/bin/warmup
+        WARMUP_INI ${buildout:directory}/warmup.ini
 
 
     [warmup]
     recipe = zc.recipe.egg:scripts
     eggs = collective.warmup
-    arguments = '${buildout:directory}/warmup.ini'
 
 
 Configuration file
