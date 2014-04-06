@@ -13,12 +13,16 @@ setup(name='collective.warmup',
       # Get more strings from
       # http://pypi.python.org/pypi?:action=list_classifiers
       classifiers=[
-          "Framework :: Plone",
           "Programming Language :: Python",
+          "Intended Audience :: System Administrators",
+          "License :: OSI Approved :: GNU General Public License (GPL)",
+          "Topic :: Internet",
+          "Topic :: System :: Monitoring",
+          "Topic :: Utilities"
       ],
       keywords='',
-      author='',
-      author_email='',
+      author='Giorgio Borelli',
+      author_email='giorgio@giorgioborelli.it',
       url='http://svn.plone.org/svn/collective/',
       license='GPL',
       packages=find_packages('src'),
