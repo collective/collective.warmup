@@ -20,7 +20,7 @@ class Checker(UserDict.DictMixin):
     retrieve a specific url and check some the output
     """
     urls = None
-    sleep = 10
+    sleep = 2
 
     def __init__(self, config_file, port):
         self.parser = configparser.ConfigParser({
@@ -94,7 +94,7 @@ class Checker(UserDict.DictMixin):
         check_exists = _get_option_array('check_exists')
         check_not_exists = _get_option_array('check_not_exists')
 
-        max_attempts = options.get('max_attempts', 5)
+        max_attempts = options.get('max_attempts', 2)
         if isinstance(max_attempts, str):
             max_attempts = int(max_attempts)
 

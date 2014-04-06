@@ -1,49 +1,60 @@
-Referecence
-===========
-
-Based on https://gist.github.com/gforcada/7040082
-
 Introduction
 ============
 
-collective.warmup warmups the plone instance cache upon start and restart with that simple operations:
+collective.warmup has been created to warm up web application's caches upon
+start and restart.
 
-* Verify the existence of a specific content in the page
-* Verify the correct response of a URL in the page
+It works by reading a configuration file containing a list of urls that
+are then invoked.
 
-On every operation is possible to set a filter to exclude objects to be verified
-
-HowTo
-=====
-
-There are two type of installation for the warmup script: Manual or Automatic with Buildout
-
-Manual Installation in virtualenv on debian/ubuntu
---------------------------------------------------
-
-::
-
-    >_ sudo apt-ge install build-essential python-dev python-lxml python-virtualenv libxml2-dev libxslt1-dev
-    >_ virtualenv warmup
-    >_ cd warmup
-    warmup >_ souce bin/activate
-    (warmup) warmup >_ git clone https://github.com/collective/collective.warmup.git
-    (warmup) warmup >_ cd collective.warmup
-    (warmup) warmup >_ python setup.py install
+collective.warmup is inspired by Gil Forcada's `warmup_plone.py`_ script.
 
 
-Console script syntax execution:
+Why not a simple bash script?
+-----------------------------
 
-::
+While the basic use case is very simple,
+collective.warmup offers the following extra features:
 
-    $ bin/warmup <path/file.ini> -p <instance_port>
+* Verifies the correctness of the response body (e.g. contains a certain string)
+* Can operate in *crawl mode*,
+  following links in pages to warm up all related pages
+* Can filter out certain urls according to a general definition
 
-Automatic installation with Buildout
-------------------------------------
 
-Put in buildout.cfg these parameters:
+Installation
+============
 
-::
+collective.warmup can be installed in two ways:
+
+* As a normal python package via pip
+* Inside a `buildout`_, with optional integration with `Plone`_
+
+Dependencies
+------------
+
+* `lxml`_
+
+
+Manual installation
+-------------------
+
+To install it (using `virtualenv`_, on a GNU/Debian machine)::
+
+    $ sudo apt-get install build-essential python-dev python-lxml python-virtualenv libxml2-dev libxslt1-dev
+    $ virtualenv warmup && cd warmup && souce bin/activate
+    (warmup) $ pip install collective.warmup
+
+and launch it with::
+
+    (warmup) $ bin/warmup <path/file.ini>
+
+
+Alternative installation with buildout
+--------------------------------------
+
+To integrate collective.warmup in a `buildout`_ with `Plone`_,
+add this to your configuration::
 
     [buildout]
     ...
@@ -57,38 +68,44 @@ Put in buildout.cfg these parameters:
     eggs +=
         collective.warmup
 
-    [sources]
-    ...
-    collective.warmup = git https://github.com/collective/collective.warmup.git
 
     [instance]
     environment-vars +=
         WARMUP_BIN ${buildout:directory}/bin/warmup
         WARMUP_INI ${buildout:directory}/warmup.ini
 
+
     [warmup]
     recipe = zc.recipe.egg:scripts
     eggs = collective.warmup
 
-Execute ``bin/buildout -N`` to obtain the warmup script in the buildout **bin** folder
 
-Configure the *.ini file
-------------------------
+After executing the buildout you will find the warmup script
+in the ``bin`` directory.
 
-This is a sample *.ini syntax configuration::
+In this example, the script will be executed automatically
+by the `Zope`_ instance each time it is started.
+
+
+Configuration file
+------------------
+
+This is a sample ``warmup.ini`` configuration::
 
     [warmup]
     enabled = True
     sleep = 2
     base_url = http://localhost
-    logfile = /home/zope/instances/plone/buildout/var/log/warmup.log
+    logfile = /path/to/warmup.log
 
     urls =
         Home page
 
+
     [config]
     max_attempts = 2
-    base_path = simplemanagement
+    base_path = mysite
+
 
     [Home page]
     path = ${config:base_path}/
@@ -96,7 +113,7 @@ This is a sample *.ini syntax configuration::
     check_exists =
         Welcome
     check_not_exists =
-        http://not.exists
+        p0wned by
     follow_links = True
     ignore_middle =
         @@
@@ -114,130 +131,76 @@ This is a sample *.ini syntax configuration::
         RSS
         .ico
 
-General section [warmup]
-########################
 
-::
+Options
+-------
 
-    enable: True/False
+Global [warmup]
+###############
 
-Enable or Disable script execution
+enable : ``True`` or ``False``
+    If ``False``, the script will do nothing when invoked.
 
-::
+sleep : integer
+    The number of seconds the script waits between url retrievals.
+    Defaults to ``2``.
 
-    sleep: 2
+base_url : a valid URL (**don't forget the protocol!**)
+    The base URL to check
+    (all paths in the various URL sections are relative to this URL).
 
-Set a pause timeout in seconds between instance interrogations
+log_file : a filesystem path
+    The file where the logs will be written.
 
-::
+urls : a list of sections (separated by newline)
+    The URLs that we want to check.
+    Each URL must have its own section in the configuration file (see below)
+    and we reference these sections here (do not put real URLs here!).
+    It also set an order for the checks (which are executed sequentially).
 
-    base_url: http://localhost
 
-Set the base URL to check **Note is important to specify the protocol ex. http:// or https://**
+URL section
+###########
 
-::
+max_attempts : integer
+    The maximum number of attempts to check the url.
+    Defaults to ``2``
 
-    logfile = /home/zope/instances/plone/buildout/var/log/warmup.log
+path : the path to check
+    The path will be added to the ``base_url`` parameter in order to retrieve
+    the page url
 
-Set the log file **Note insert the absolute path of the file**
+check_exists : list of strings
+    A list of strings that must be present in the page
 
-::
+check_not_exists : list of strings
+    A list of strings that must not be present in the page
 
-    urls =
-        Home page
+follow_links : ``True`` or ``False``
+    If ``True`` the script will follow the links in the page and will
+    perform the same checks for each link.
 
-With this option we should insert a list of section of webpages to check
+ignore_middle : list of strings
+    If ``follow_links`` is ``True``, the links containing one of these strings
+    will be ignored
 
-Page Section
-############
+ignore_end : list of strings
+    If ``follow_links`` is ``True``, the links ending with one of these strings
+    will be ignored
 
-::
-
-    max_attempts = 2
-
-Set the maximum number of attempts of checks
-
-::
-
-    path = plone
-
-Set the plonesite base path
-
-::
-
-    check_exists =
-        Welcome
-
-Set a list of terms or URL that MUST be present in the page
-
-::
-
-    check_not_exists =
-        http://not.exists
-
-Set a list of terms or URL that MUST NOT be present in the page
-
-::
-
-    follow_links = True/False
-
-Enable or Disable the follow links checks
-
-::
-
-    ignore_middle =
-        @@
-        ++theme++
-        #
-        ?
-
-Set a list of IGNORE URL with that parameter in the middle of the string
-
-::
-
-    ignore_end =
-        .css
-        .js
-        .png
-        .jpg
-        .jpeg
-        .gif
-        .xml
-        RSS
-        .ico
-
-Set a list of IGNORE URL with that parameter in the end of the string
-
-Log File
-========
-
-This is the warmup log messages::
-
-    Positive Result after the scrip execution with follow_links = True
-
-    2014-04-04 14:27:51,319 INFO Section Home page
-    2014-04-04 14:27:51,425 INFO http://localhost/plone/ [ 0 sec. ] [ OK ]
-    2014-04-04 14:27:51,428 INFO 4 links found on the http://localhost/plone/.
-    2014-04-04 14:27:51,516 INFO http://localhost/plone/login [ 0 sec. ] [ OK ]
-    2014-04-04 14:27:51,590 INFO http://localhost/plone/sitemap [ 0 sec. ] [ OK ]
-    2014-04-04 14:27:51,668 INFO http://localhost/plone/accessibility-info [ 0 sec. ] [ OK ]
-    2014-04-04 14:27:51,740 INFO http://localhost/plone/contact-info [ 0 sec. ] [ OK ]
-
-    Positive Result after the scrip execution with follow_links = False
-
-    2014-04-04 14:43:22,561 INFO Section Home page
-    2014-04-04 14:43:26,766 INFO http://localhost/plone/ [ 4 sec. ] [ OK ]
-    2014-04-04 14:43:26,766 WARNING Warmup Done
-
-    Negative Result after the scrip execution
-
-    2014-04-04 14:52:23,422 INFO Section Home page
-    2014-04-04 14:52:27,624 INFO http://localhost/plone/ [ 4 sec. ] [ FAILED ]
-    2014-04-04 14:52:27,624 WARNING Warmup Done
 
 Credits
 -------
 
-.. image:: http://www.abstract.it/logo-abstract-readme?a
+.. image:: http://www.abstract.it/logo-abstract-readme
    :alt: Abstract Website
-   :target: http://www.abstract.it
+   :target: http://abstract-technology.com/
+
+
+
+.. _virtualenv: http://www.virtualenv.org/en/latest/
+.. _Plone: http://plone.org
+.. _warmup_plone.py: https://gist.github.com/gforcada/7040082
+.. _buildout: http://www.buildout.org
+.. _Zope: http://zope.org
+.. _lxml: http://pypi.python.org/pypi/lxml
