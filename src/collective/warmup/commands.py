@@ -1,5 +1,5 @@
 import argparse
-from .checker import Checker
+from collective.warmup.checker import Checker
 
 
 def warmup():
