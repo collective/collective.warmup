@@ -6,3 +6,5 @@ bin
 develop-eggs
 parts
 var
+warmup.log
+

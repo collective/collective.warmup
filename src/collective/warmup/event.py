@@ -31,7 +31,7 @@ class Starting(object):
             logger.info('Executing intances warmup')
             proc = subprocess.Popen(
                 [
-                    "{0} {1} -p {2}".format(
+                    "%s %s -p %d" % (
                         warmup_bin, warmup_ini, zserver.port
                     )
                 ],

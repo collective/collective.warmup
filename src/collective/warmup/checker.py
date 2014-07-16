@@ -50,8 +50,8 @@ class Checker(UserDict.DictMixin):
 
     def _get_url(self, path):
         if not path.startswith('/'):
-            path = '/{0}'.format(path)
-        return '{0}:{1}{2}'.format(
+            path = '/%s' % path
+        return '%s:%s%s' % (
             self.base_url,
             self.port,
             path
@@ -85,7 +85,7 @@ class Checker(UserDict.DictMixin):
     def _warmup(self, section):
         options = self.get(section)
 
-        self.logger.info('Section {0}'.format(section))
+        self.logger.info('Section %s' % section)
 
         def _get_option_array(name):
             value = options.get(name, '')
@@ -114,7 +114,7 @@ class Checker(UserDict.DictMixin):
                 ignore_middle, ignore_end
             )
             self.logger.info(
-                '{0} links found on the {1}.'.format(
+                '%d links found on the %s.' % (
                     len(links), url
                 )
             )
@@ -148,22 +148,19 @@ class Checker(UserDict.DictMixin):
                     check = False
 
                 if check:
-                    self.logger.info('{0} [ {1} sec. ] [ {2} ]'.format(
+                    self.logger.info('%s [ %d sec. ] [ %s ]' % (
                         url,
                         elapsed.seconds,
                         OK)
                     )
                     return output
             except urllib2.URLError:
-                self.logger.error('{0} - Attempt {1}'.format(
-                    url,
-                    i)
-                )
+                self.logger.error('%s - Attempt %d' % (url, i))
 
             time.sleep(self.sleep)
             if i >= max_attempts:
                 elapsed = datetime.now() - start
-                self.logger.info('{0} [ {1} sec. ] [ {2} ]'.format(
+                self.logger.info('%s [ %d sec. ] [ %s ]' % (
                     url,
                     elapsed.seconds,
                     FAILED)
@@ -197,7 +194,7 @@ class Checker(UserDict.DictMixin):
 
                 if section not in self._raw:
                     self.logger.error(
-                        "Section {0} doesn't exist".format(section)
+                        "Section %s doesn't exist" % section
                     )
                     continue
 
