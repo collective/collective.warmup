@@ -51,11 +51,19 @@ class Checker(UserDict.DictMixin):
     def _get_url(self, path):
         if not path.startswith('/'):
             path = '/%s' % path
-        return '%s:%s%s' % (
-            self.base_url,
-            self.port,
-            path
-        )
+
+        if self.port != '80':
+            url = '%s:%s%s' % (
+                self.base_url,
+                self.port,
+                path
+            )
+        else:
+            url = '%s%s' % (
+                self.base_url,
+                path
+            )
+        return url
 
     def _get_links(self, page, ignore_middle, ignore_end):
         tree = lxml.html.fromstring(page)
