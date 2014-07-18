@@ -52,7 +52,7 @@ class Checker(UserDict.DictMixin):
         if not path.startswith('/'):
             path = '/%s' % path
 
-        if self.port != '80':
+        if self.port != 80:
             url = '%s:%s%s' % (
                 self.base_url,
                 self.port,
