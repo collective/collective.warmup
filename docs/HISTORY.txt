@@ -4,13 +4,15 @@ Changelog
 1.2 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Add zcml:condition for Plone 3 compatibility
+  [gborelli]
 
 
 1.1 (2014-07-18)
 ----------------
 
-- Python 2.4 support [gborelli]
+- Python 2.4 support
+  [gborelli]
 
 
 1.0 (2014-04-06)
