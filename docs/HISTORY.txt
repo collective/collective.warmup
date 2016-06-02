@@ -4,7 +4,7 @@ Changelog
 1.2 (unreleased)
 ----------------
 - Add @@health.check browser view to be used with load-balancer
-  health-check in order not to mark backend healthy to early
+  health-check in order not to mark backend healthy too early
   before proper warmup.
   [avoinea]
 
