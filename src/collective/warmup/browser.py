@@ -39,7 +39,7 @@ class HealthCheck(BrowserView):
         if self.healthy:
             return 'ok'
 
-        msg = "UNHEALTHY - db cache size to low: %s/%s" % (self.cacheSize, self.threshold)
+        msg = "UNHEALTHY - db cache size too low: %s/%s" % (self.cacheSize, self.threshold)
         logger.warn(msg)
         self.request.response.setStatus(503, msg)
         return msg
