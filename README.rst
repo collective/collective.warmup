@@ -192,7 +192,7 @@ ignore_end : list of strings
 
 Health check
 ------------
-In order not to mark backend healthy to early by the load-balancer, before proper
+In order not to mark backend healthy too early by the load-balancer, before proper
 warmup, this package defines a browser view called ``@@health.check`` which can be
 used within your load-balancer probe mechanism. See bellow a Varnish configuration
 example::

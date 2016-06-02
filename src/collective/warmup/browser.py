@@ -1,35 +1,45 @@
 """ Browser views
 """
-import os
 import logging
 from Products.Five.browser import BrowserView
-
+from collective.warmup.config import WARMUP, HEALTH_THRESHOLD
 logger = logging.getLogger('collective.warmup')
 
-HEALTH_THRESHOLD = os.environ.get('WARMUP_HEALTH_THRESHOLD', None)
-if HEALTH_THRESHOLD is None:
-    logger.warn("DISABLED @@health.check: WARMUP_HEALTH_THRESHOLD env not set")
-else:
-    logger.warn("ENABLED @@health.check: WARMUP_HEALTH_THRESHOLD = %s",
-                HEALTH_THRESHOLD)
 
 class HealthCheck(BrowserView):
     """ Health check view to be used with load-balancers health check.
     """
-    def __call__(self, *args, **kwargs):
-        if HEALTH_THRESHOLD is None:
-            return "ok"
 
-        try:
-            threshold = int(HEALTH_THRESHOLD)
-            cacheSize = self.context._p_jar.db().cacheSize()
-        except Exception, err:
-            logger.exception(err)
-            return "ok"
-        else:
-            if cacheSize < threshold:
-                msg = "DB cache size to low: %s/%s" % (cacheSize, threshold)
-                logger.warn(msg)
-                self.request.response.setStatus(503, msg)
-                return msg
+    @property
+    def threshold(self):
+        """ Health threshold
+        """
+        return HEALTH_THRESHOLD
+
+    @property
+    def cacheSize(self):
+        """ Current DB cache size
+        """
+        return self.context._p_jar.db().cacheSize()
+
+    @property
+    def healthy(self):
+        """ Is Zope instance healthy
+        """
+        if WARMUP['done']:
+            logger.debug("Healthy forever")
+            return True
+
+        if self.cacheSize >= self.threshold:
+            logger.info("HEALTHY - db cache size %s/%s", self.cacheSize, self.threshold)
+            WARMUP['done'] = True
+        return WARMUP['done']
+        
+    def __call__(self, *args, **kwargs):
+        if self.healthy:
             return 'ok'
+
+        msg = "UNHEALTHY - db cache size to low: %s/%s" % (self.cacheSize, self.threshold)
+        logger.warn(msg)
+        self.request.response.setStatus(503, msg)
+        return msg
