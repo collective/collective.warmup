@@ -3,6 +3,10 @@ Changelog
 
 1.2 (unreleased)
 ----------------
+- Check for write permissions within logfile and fallback
+  to a temporary file if can't write instead of sys.exit
+  [avoinea]
+
 - Add @@health.check browser view to be used with load-balancer
   health-check in order not to mark backend healthy too early
   before proper warmup.
