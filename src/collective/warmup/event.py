@@ -1,6 +1,7 @@
 import logging
 import os
 import subprocess
+import thread
 import time
 from App.config import getConfiguration
 from ZServer.HTTPServer import zhttp_server
@@ -29,11 +30,16 @@ class Starting(object):
 
         if warmup_bin and warmup_ini:
             logger.info('Executing intances warmup')
-            proc = subprocess.Popen(
-                [
-                    "%s %s -p %d" % (
-                        warmup_bin, warmup_ini, zserver.port
-                    )
-                ],
-                shell=True
-            )
+
+            command = "%s %s -p %d" % (warmup_bin, warmup_ini, zserver.port)
+
+            # Since the warmup subprocess waits for Zope to be finished starting
+            # up and handling requests, we should not block the startup here.
+            # But it is important to collect the result of the subprocess (by
+            # using subprocess.check_call) in order to avoid zombie processes.
+            # However, since subprocess.check_call is blocking the caller, we call
+            # it within a new thread which will have the patience to wait for the
+            # subprocess to finish and the main startup process can continue.
+            thread.start_new_thread(subprocess.check_call,
+                                    ([command],),
+                                    {'shell': True})

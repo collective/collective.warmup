@@ -4,6 +4,8 @@ Changelog
 1.2 (unreleased)
 ----------------
 
+- Avoid zombie processes. [jone]
+
 - Add zcml:condition for Plone 3 compatibility
   [gborelli]
 
