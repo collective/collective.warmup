@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.2 (unreleased)
+1.2 (2016-09-08)
 ----------------
 - Check for write permissions within logfile and fallback
   to a temporary file if can't write instead of sys.exit
