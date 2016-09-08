@@ -12,6 +12,8 @@ Changelog
   before proper warmup.
   [avoinea]
 
+- Avoid zombie processes. [jone]
+
 - Add zcml:condition for Plone 3 compatibility
   [gborelli]
 
