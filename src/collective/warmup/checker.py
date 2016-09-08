@@ -6,6 +6,7 @@ import re
 import time
 import UserDict
 import urllib2
+import tempfile
 
 
 FAILED = 'FAILED'
@@ -37,6 +38,13 @@ class Checker(UserDict.DictMixin):
             logfile = self.parser.get('warmup', 'logfile')
         except configparser.NoOptionError:
             logfile = 'warmup.log'
+
+        # Check for write permissions to logfile
+        try:
+            with open(logfile, 'a') as ofile:
+                ofile.write('--')
+        except Exception:
+            logfile = tempfile.mktemp(prefix='warmup.', suffix='.log')
 
         logging.basicConfig(
             filename=logfile,

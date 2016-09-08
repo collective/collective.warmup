@@ -73,6 +73,7 @@ add this to your configuration::
     environment-vars +=
         WARMUP_BIN ${buildout:directory}/bin/warmup
         WARMUP_INI ${buildout:directory}/warmup.ini
+        WARMUP_HEALTH_THRESHOLD 50000
 
 
     [warmup]
@@ -187,6 +188,31 @@ ignore_middle : list of strings
 ignore_end : list of strings
     If ``follow_links`` is ``True``, the links ending with one of these strings
     will be ignored
+
+
+Health check
+------------
+In order not to mark backend healthy too early by the load-balancer, before proper
+warmup, this package defines a browser view called ``@@health.check`` which can be
+used within your load-balancer probe mechanism. See bellow a Varnish configuration
+example::
+
+    backend instance_1 {
+        .host = "localhost";
+        .port = "8081";
+        .probe = {
+             .url = "/health.check";
+             .interval = 5s;
+             .timeout = 1s;
+             .window = 5;
+             .threshold = 3;
+         }
+    }
+
+This way Varnish will mark the Zope instance backend healthy when
+ZODB cache-size is bigger than ``WARMUP_HEALTH_THRESHOLD``. If you do not define
+the ``WARMUP_HEALTH_THRESHOLD`` environment variable, the Zope instance backend
+will be marked healthy as soon as Zope will be able to handle requests.
 
 
 Credits
