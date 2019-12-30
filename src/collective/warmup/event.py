@@ -1,7 +1,7 @@
 import logging
 import os
 import subprocess
-import thread
+import _thread
 import time
 from App.config import getConfiguration
 from ZServer.HTTPServer import zhttp_server
@@ -40,6 +40,6 @@ class Starting(object):
             # However, since subprocess.check_call is blocking the caller, we call
             # it within a new thread which will have the patience to wait for the
             # subprocess to finish and the main startup process can continue.
-            thread.start_new_thread(subprocess.check_call,
+            _thread.start_new_thread(subprocess.check_call,
                                     ([command],),
                                     {'shell': True})

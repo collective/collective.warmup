@@ -13,7 +13,7 @@ if HEALTH_THRESHOLD is None:
 else:
     try:
         HEALTH_THRESHOLD = int(HEALTH_THRESHOLD)
-    except Exception, err:
+    except Exception as err:
         logger.exception(err)
         logger.warn("DISABLED @@health.check: See error above for details")
         WARMUP['done'] = True

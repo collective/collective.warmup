@@ -1,11 +1,11 @@
-import ConfigParser as configparser
+import configparser as configparser
 from datetime import datetime
 import logging
 import lxml.html
 import re
 import time
 import UserDict
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import tempfile
 
 
@@ -150,7 +150,7 @@ class Checker(UserDict.DictMixin):
         check = True
         while True:
             try:
-                output = urllib2.urlopen(url).read()
+                output = urllib.request.urlopen(url).read()
                 elapsed = datetime.now() - start
 
                 # check that specific text in html output exists
@@ -170,7 +170,7 @@ class Checker(UserDict.DictMixin):
                         OK)
                     )
                     return output
-            except urllib2.URLError:
+            except urllib.error.URLError:
                 self.logger.error('%s - Attempt %d' % (url, i))
 
             time.sleep(self.sleep)
@@ -245,7 +245,7 @@ class Options(UserDict.DictMixin):
         self._data = {}
 
     def _substitute(self):
-        for key, value in self._raw.items():
+        for key, value in list(self._raw.items()):
             if '${' in value:
                 self._cooked[key] = self._sub(value, [(self.section, key)])
 
